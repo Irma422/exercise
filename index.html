@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>雙人運動打卡計算器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .month {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .person {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-right: 6px;
+      margin-top: 6px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+    }
+    button.half { background: #2196f3; }
+    button.reset { background: #f44336; }
+    .result {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    ul {
+      margin-top: 10px;
+      padding-left: 18px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏃‍♀️ 每月運動打卡（投資版）</h1>
+    <div class="month" id="month"></div>
+
+    <div class="person" id="p1">
+      <h2>昰為</h2>
+      <button onclick="add('p1', 1)">+1 次</button>
+      <button class="half" onclick="add('p1', 0.5)">+0.5 次</button>
+      <button class="reset" onclick="resetPerson('p1')">重設</button>
+      <div class="result" id="r1"></div>
+      <ul id="log1"></ul>
+    </div>
+
+    <div class="person" id="p2">
+      <h2>奕臻</h2>
+      <button onclick="add('p2', 1)">+1 次</button>
+      <button class="half" onclick="add('p2', 0.5)">+0.5 次</button>
+      <button class="reset" onclick="resetPerson('p2')">重設</button>
+      <div class="result" id="r2"></div>
+      <ul id="log2"></ul>
+    </div>
+  </div>
+
+  <script>
+    const target = 10;
+    const finePer = 1000; // 每次未完成需投入的投資額
+    const monthKey = new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+
+    const defaultData = {
+      p1: { total: 0, logs: [] },
+      p2: { total: 0, logs: [] }
+    };
+
+    const data = JSON.parse(localStorage.getItem(monthKey)) || defaultData;
+
+    const now = new Date();
+    document.getElementById('month').innerText = `📅 ${now.getFullYear()} 年 ${now.getMonth() + 1} 月`;
+
+    function add(person, value) {
+      if (data[person].total >= target) return;
+
+      data[person].total += value;
+      if (data[person].total > target) data[person].total = target;
+
+      const d = new Date();
+      const record = `${d.getMonth() + 1}/${d.getDate()} ${value} 次`;
+      data[person].logs.push(record);
+
+      save();
+      update(person);
+    }
+
+    function resetPerson(person) {
+      data[person] = { total: 0, logs: [] };
+      save();
+      update(person);
+    }
+
+    function update(person) {
+      const done = data[person].total;
+      const remaining = Math.max(target - done, 0);
+      const fine = remaining * finePer;
+
+      document.getElementById(person === 'p1' ? 'r1' : 'r2').innerHTML =
+        `已完成：${done} 次<br>剩餘：${remaining} 次<br>投資額：NT$ ${fine.toLocaleString()}`;
+
+      const logEl = document.getElementById(person === 'p1' ? 'log1' : 'log2');
+      logEl.innerHTML = data[person].logs.map(l => `<li>${l}</li>`).join('');
+    }
+
+    function save() {
+      localStorage.setItem(monthKey, JSON.stringify(data));
+    }
+
+    update('p1');
+    update('p2');
+  </script>
+</body>
+</html>
